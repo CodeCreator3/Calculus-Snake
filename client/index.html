@@ -4,18 +4,50 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Snake Calculus Game</title>
-  <style>
-    canvas { background: #111; display: block; margin: auto; }
-  </style>
 </head>
 <body>
-  <h1 align="center">Snake Calculus Game</h1>
-  <div align="center">
+  
+  <div id="lobbyUI" align="center">
+    <h1 id="gameTitle">Snake Calculus Game</h1>
     <button onclick="createGame()">Create Game</button>
     <input type="text" id="roomCode" placeholder="Room Code" />
     <button onclick="joinGame()">Join Game</button>
+    <style>
+      #gameTitle{
+        color: white;
+        font-family: sans-serif;
+      }
+    </style>
   </div>
-  <canvas id="gameCanvas" width="window.innerWidth" height="window.innerHeight"></canvas>
+
+<div id="overlay">
+  <p id="roomDisplay" align="center"></p>
+  <style>
+      #roomDisplay {
+        color: white;
+        font-family: sans-serif;
+        font-size: 50px;
+      }
+    </style>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        height: 100%;
+        background: #111;
+      }
+
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
 <script src="/socket.io/socket.io.js"></script>
   <script src="game.js"></script>
 </body>

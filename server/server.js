@@ -23,13 +23,6 @@ console.log("New connection:", socket.id);
     const roomCode = generateRoomCode();
     sessions[roomCode] = { players: {}, food: { x:20, y: 20 } };
     socket.join(roomCode);
-sessions[roomCode].players[socket.id] = {
-      x: 5,
-      y: 5,
-      dir: "right",
-      length: 3,
-      stunned: false,
-    };
     socket.emit("gameCreated", roomCode);
   });
  

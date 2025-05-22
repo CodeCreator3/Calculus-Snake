@@ -7,7 +7,12 @@ function createGame() {
   socket.emit("createGame");
   socket.on("gameCreated", (code) => {
     roomCode = code;
-    alert("Game created! Room code: " + code);
+    document.getElementById("roomDisplay").innerText = "Room Code: " + code;
+
+    console.log("Game created with code: " + code);
+
+    // Hide the lobby UI
+    document.getElementById("lobbyUI").style.display = "none";
   });
 }
  
@@ -35,3 +40,24 @@ window.addEventListener("keydown", (e) => {
   if (key === "ArrowRight") dir = "right";
   if (dir) socket.emit("changeDirection", { roomCode, dir });
 });
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+const cellSize = 20; // each grid square is 20px
+
+socket.on("stateUpdate", (session) => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const id in session.players) {
+    const p = session.players[id];
+    ctx.fillStyle = id === socket.id ? "lime" : "white";
+    ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
+  }
+});
+
+const gridWidth = Math.floor(canvas.width / cellSize);
+const gridHeight = Math.floor(canvas.height / cellSize);
