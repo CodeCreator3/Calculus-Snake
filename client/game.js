@@ -26,10 +26,44 @@ socket.on("stateUpdate", (session) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (const id in session.players) {
     const p = session.players[id];
-ctx.fillStyle = id === socket.id ? "lime" : "white";
-    ctx.fillRect(p.x * 10, p.y * 10, 10, 10);
+  ctx.fillStyle = id === socket.id ? "lime" : "white";
+      ctx.fillRect(p.x * 10, p.y * 10, 10, 10);
   }
+  
 });
+
+socket.on("question", (q) => {
+
+  console.log("Received question:", q);
+
+  const panel = document.getElementById("questionPanel");
+  const questionText = document.getElementById("questionText");
+  const choicesContainer = document.getElementById("choicesContainer");
+
+  // Clear previous choices
+  choicesContainer.innerHTML = "";
+
+  // Set the question
+  questionText.innerHTML = q.question;
+
+  // Add choice buttons
+  q.choices.forEach((choice, i) => {
+    const btn = document.createElement("button");
+    btn.innerHTML = choice;
+    btn.onclick = () => {
+      socket.emit("answer", { questionId: q.id, selected: i });
+      panel.style.display = "none"; // optionally hide panel after answering
+    };
+    choicesContainer.appendChild(btn);
+  });
+
+  // Show panel
+  panel.style.display = "block";
+
+  // Re-render math
+  MathJax.typesetPromise([questionText]);
+});
+
  
 window.addEventListener("keydown", (e) => {
   const key = e.key;

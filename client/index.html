@@ -1,40 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Snake Calculus Game</title>
-</head>
-<body>
-  
-  <div id="lobbyUI" align="center">
-    <h1 id="gameTitle">Snake Calculus Game</h1>
-    <button onclick="createGame()">Create Game</button>
-    <input type="text" id="roomCode" placeholder="Room Code" />
-    <button onclick="joinGame()">Join Game</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snake Calculus Game</title>
+  </head>
+  <body>
+    <script id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    ></script>
+    <div id="lobbyUI" align="center">
+      <h1 id="gameTitle">Snake Calculus Game</h1>
+      <button onclick="createGame()">Create Game</button>
+      <input type="text" id="roomCode" placeholder="Room Code" />
+      <button onclick="joinGame()">Join Game</button>
+      <style>
+        #gameTitle {
+          color: white;
+          font-family: sans-serif;
+        }
+      </style>
+    </div>
+
+    <div id="overlay">
+      <p id="roomDisplay" align="center"></p>
+      <style>
+        #roomDisplay {
+          color: white;
+          font-family: sans-serif;
+          font-size: 50px;
+        }
+      </style>
+    </div>
+
+    <div id="questionPanel">
+      <p id="questionText"></p>
+      <p id="choicesContainer"></p>
+      <style>
+        #questionPanel {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          width: 300px;
+          background-color: #222;
+          color: white;
+          border-radius: 12px;
+          padding: 16px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+          font-family: sans-serif;
+          z-index: 999;
+        }
+
+        #questionText {
+          margin-bottom: 12px;
+          font-size: 16px;
+        }
+
+        #choicesContainer button {
+          display: block;
+          width: 100%;
+          margin: 6px 0;
+          padding: 8px;
+          font-size: 16px;
+          background-color: #444;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        #choicesContainer button:hover {
+          background-color: #666;
+        }
+      </style>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
     <style>
-      #gameTitle{
-        color: white;
-        font-family: sans-serif;
-      }
-    </style>
-  </div>
-
-<div id="overlay">
-  <p id="roomDisplay" align="center"></p>
-  <style>
-      #roomDisplay {
-        color: white;
-        font-family: sans-serif;
-        font-size: 50px;
-      }
-    </style>
-</div>
-
-<canvas id="gameCanvas"></canvas>
-
-    <style>
-      html, body {
+      html,
+      body {
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -48,7 +94,7 @@
         height: 100vh;
       }
     </style>
-<script src="/socket.io/socket.io.js"></script>
-  <script src="game.js"></script>
-</body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
+  </body>
 </html>

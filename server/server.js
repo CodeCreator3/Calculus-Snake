@@ -3,45 +3,67 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
- 
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
- 
+
+const fs = require("fs");
+
+try {
+  const raw = fs.readFileSync("questions.json", "utf8");
+  const questions = JSON.parse(raw);
+  console.log("Questions loaded:", questions);
+} catch (err) {
+  console.error("Failed to load questions.json:", err);
+}
+
 app.use(express.static(path.join(__dirname, "../client")));
- 
+
 const sessions = {}; // { roomCode: { players, food } }
- 
+
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
 }
- 
+
 io.on("connection", (socket) => {
-console.log("New connection:", socket.id);
- 
+  console.log("New connection:", socket.id);
+
   socket.on("createGame", () => {
     const roomCode = generateRoomCode();
-    sessions[roomCode] = { players: {}, food: { x:20, y: 20 } };
+    sessions[roomCode] = { players: {}, food: { x: 20, y: 20 } };
     socket.join(roomCode);
     socket.emit("gameCreated", roomCode);
   });
- 
+
   socket.on("joinGame", ({ roomCode }) => {
     if (sessions[roomCode]) {
       socket.join(roomCode);
-sessions[roomCode].players[socket.id] = {
+      sessions[roomCode].players[socket.id] = {
         x: 2,
         y: 2,
         dir: "right",
         length: 3,
         stunned: false,
       };
-io.to(roomCode).emit("playerJoined", sessions[roomCode].players);
+      io.to(roomCode).emit("playerJoined", sessions[roomCode].players);
+      io.to(roomCode).emit("askQuestion", { roomCode });
     }
   });
- 
-  socket.on("submitAnswer", ({ roomCode, correct }) => {
-const player = sessions[roomCode]?.players[socket.id];
+
+  socket.on("askQuestion", ({ roomCode }) => {
+    console.log("asking question");
+    const player = sessions[roomCode]?.players[socket.id];
+    if (player) {
+      socket.emit(
+        "question",
+        questions[Math.floor(Math.random() * questions.length)]
+      );
+    }
+  });
+
+  socket.on("answer", ({ roomCode, correct }) => {
+    const player = sessions[roomCode]?.players[socket.id];
     if (player) {
       player.stunned = !correct;
       if (player.stunned) {
@@ -51,19 +73,19 @@ const player = sessions[roomCode]?.players[socket.id];
       }
     }
   });
- 
+
   socket.on("changeDirection", ({ roomCode, dir }) => {
-const player = sessions[roomCode]?.players[socket.id];
+    const player = sessions[roomCode]?.players[socket.id];
     if (player && !player.stunned) player.dir = dir;
   });
- 
+
   socket.on("disconnect", () => {
     for (const roomCode in sessions) {
-delete sessions[roomCode].players[socket.id];
+      delete sessions[roomCode].players[socket.id];
     }
   });
 });
- 
+
 function updateGameState(session) {
   // Basic movement logic
   for (const id in session.players) {
@@ -75,12 +97,14 @@ function updateGameState(session) {
     else if (player.dir === "down") player.y += 1;
   }
 }
- 
+
 setInterval(() => {
   for (const roomCode in sessions) {
     updateGameState(sessions[roomCode]);
-io.to(roomCode).emit("stateUpdate", sessions[roomCode]);
+    io.to(roomCode).emit("stateUpdate", sessions[roomCode]);
   }
 }, 300);
- 
-server.listen(3000, () => console.log("Server running on http://localhost:3000"));
+
+server.listen(3000, () =>
+  console.log("Server running on http://localhost:3000")
+);
