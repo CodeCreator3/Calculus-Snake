@@ -110,6 +110,11 @@ setInterval(() => {
   }
 }, 20);
 
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
 function getRandomColorHex() {
   return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
