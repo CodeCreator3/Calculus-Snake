@@ -12,9 +12,13 @@ let zoom = 1;
 const zoomMin = 0.5;
 const zoomMax = 2;
 const zoomStep = 0.1;
+let isHost = false;
+let cameraVelocityX = 0;
+let cameraVelocityY = 0;
 
 function createGame() {
   socket.emit("createGame");
+  isHost = true; // set flag
   socket.on("gameCreated", (code) => {
     roomCode = code;
     document.getElementById("roomDisplay").innerText = "Room Code: " + code;
@@ -23,7 +27,7 @@ function createGame() {
 
     // Hide the lobby UI
     document.getElementById("lobbyUI").style.display = "none";
-    
+
     document.getElementById("questionPanel").style.display = "none";
   });
 }
@@ -37,15 +41,15 @@ function paintGrid() {
   }
 }
 
-
 function joinGame() {
   const code = document.getElementById("roomCode").value;
   roomCode = code;
   socket.emit("joinGame", { roomCode: code });
   socket.emit("askQuestion", { roomCode: code });
   // Hide the lobby UI
-    document.getElementById("lobbyUI").style.display = "none";
-    socket.emit("setGridSize", { roomCode, gridWidth, gridHeight });
+  document.getElementById("lobbyUI").style.display = "none";
+  document.getElementById("moveCounter").style.display = "block";
+  socket.emit("setGridSize", { roomCode, gridWidth, gridHeight });
 }
 
 socket.on("question", (q) => {
@@ -71,32 +75,35 @@ socket.on("question", (q) => {
     btn.innerHTML = choice;
     btn.onclick = () => {
       const correct = i == newQ.correctIndex;
-      socket.emit("answer", { roomCode: code, correct: correct, index: i, correctIndex: newQ.correctIndex });
+      socket.emit("answer", {
+        roomCode: code,
+        correct: correct,
+        index: i,
+        correctIndex: newQ.correctIndex,
+      });
     };
     choicesContainer.appendChild(btn);
     MathJax.typesetPromise([btn]);
     btns[i] = btn;
   });
 
-   // Re-render math
+  // Re-render math
   MathJax.typesetPromise([questionText]);
 
   // Show panel
   panel.style.display = "block";
 });
 
-function randomizeQuestion(q){
+function randomizeQuestion(q) {
   let newIndices = [];
-  let filledIndices = [];
+  let newChoices = [];
   for (let i = 0; i < q.choices.length; i++) {
     let randomIndex;
     do {
       randomIndex = Math.floor(Math.random() * q.choices.length);
-    } while (filledIndices.includes(randomIndex));
-    filledIndices.push(randomIndex);
+    } while (newIndices.includes(randomIndex));
     newIndices[i] = randomIndex;
   }
-  let newChoices = [];
   for (let i = 0; i < q.choices.length; i++) {
     newChoices[i] = q.choices[newIndices[i]];
   }
@@ -109,17 +116,23 @@ function randomizeQuestion(q){
 }
 
 socket.on("answerResult", (correct, index, correctIndex) => {
-  if(answered) return;
-  if(correct) moves++;
-  document.getElementById('moveCounter').textContent = `Moves: ${moves}`;
-  if(correct) {
+  if (answered) return;
+  if (correct) moves++;
+  document.getElementById("moveCounter").textContent = `Moves: ${moves}`;
+  if (correct) {
     btns[index].style.backgroundColor = "#648268";
   } else {
     btns[index].style.backgroundColor = "#8B2C2C";
     btns[correctIndex].style.backgroundColor = "#648268";
   }
   answered = true;
-  setTimeout(() => {socket.emit("askQuestion", { roomCode }); answered = false;}, correct ? 1000 : 10000);
+  setTimeout(
+    () => {
+      socket.emit("askQuestion", { roomCode });
+      answered = false;
+    },
+    correct ? 1000 : 10000
+  );
 });
 
 window.addEventListener("keydown", (e) => {
@@ -133,7 +146,7 @@ window.addEventListener("keydown", (e) => {
     if (dir) socket.emit("changeDirection", { roomCode, dir });
     socket.emit("move", { roomCode });
     moves--;
-    document.getElementById('moveCounter').textContent = `Moves: ${moves}`;
+    document.getElementById("moveCounter").textContent = `Moves: ${moves}`;
   }
 });
 
@@ -142,6 +155,38 @@ canvas.addEventListener("wheel", (e) => {
   const delta = Math.sign(e.deltaY);
   zoom -= delta * zoomStep;
   zoom = Math.max(zoomMin, Math.min(zoomMax, zoom));
+
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+
+  canvas.addEventListener("mousedown", (e) => {
+    if (!isHost) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+  if (!isHost || !isDragging) return;
+
+  const dx = (e.clientX - dragStartX) / zoom;
+  const dy = (e.clientY - dragStartY) / zoom;
+
+  const sensitivity = 1.4; // smaller = less jumpy
+  cameraVelocityX = dx * sensitivity;
+  cameraVelocityY = dy * sensitivity;
+
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+});
+
+  canvas.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+  canvas.addEventListener("mouseleave", () => {
+    isDragging = false;
+  });
 });
 
 function resizeCanvas() {
@@ -153,13 +198,28 @@ window.addEventListener("resize", resizeCanvas);
 
 socket.on("stateUpdate", (session) => {
   const player = session.players[socket.id];
-  if (!player) return;
+  if (isHost) {
+    if(cameraVelocityX !== 0 || cameraVelocityY !== 0){
+      cameraX -= cameraVelocityX;
+      cameraY -= cameraVelocityY;
+      if(cameraX < 0) cameraX = 0;
+      if(cameraY < 0) cameraY = 0;
+      if(cameraX > (gridWidth * cellSize * zoom)) cameraX = (gridWidth * cellSize * zoom);
+      if(cameraY > (gridHeight * cellSize * zoom)) cameraY = (gridHeight * cellSize * zoom);
 
-  // Smooth camera follow
-  const targetX = player.x * cellSize + cellSize / 2;
-  const targetY = player.y * cellSize + cellSize / 2;
-  cameraX += (targetX - cameraX) * 0.1;
-  cameraY += (targetY - cameraY) * 0.1;
+      // Apply damping to make it smooth and stop gradually
+      cameraVelocityX *= 0.85;
+      cameraVelocityY *= 0.85;
+
+      if (Math.abs(cameraVelocityX) < 0.01) cameraVelocityX = 0;
+      if (Math.abs(cameraVelocityY) < 0.01) cameraVelocityY = 0;
+    }
+  } else{
+    const targetX = player.x * cellSize + cellSize / 2;
+    const targetY = player.y * cellSize + cellSize / 2;
+    cameraX += (targetX - cameraX) * 0.1;
+    cameraY += (targetY - cameraY) * 0.1;
+  }
 
   // Clear and apply camera transform
   ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
