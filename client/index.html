@@ -59,6 +59,7 @@ MathJax = {
           box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
           font-family: sans-serif;
           z-index: 999;
+          display: none;
         }
 
         #questionText {
@@ -104,6 +105,17 @@ MathJax = {
         height: 100vh;
       }
     </style>
+    <div id="moveCounter" style="
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    color: white;
+    font-size: 32px;
+    font-family: Arial, sans-serif;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 5px;
+  ">Moves: 0</div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="game.js"></script>
   </body>

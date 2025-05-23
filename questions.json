@@ -13,14 +13,14 @@
   },
   {
     "id": 3,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\ x(x-5)}{x-5}$",
+    "question": "Find the limit: $\\lim_{x \\to 5} \\frac{\\ x(x-5)}{x-5}$",
     "choices": ["Does not exist", "$\\infty$", "$0$", "$5$"],
     "correctIndex": 3
   },
   {
     "id": 4,
-    "question": "Evaluate: $\\int_0^\\frac{\\pi2} \\sinx dx$",
-    "choices": ["$1$", "$0$", "$\\frac{\\pi2}$", "$\\frac{\\sqrt{3}2}$"],
+    "question": "Evaluate: $\\int_0^{\\frac{\\pi}{2}} \\sinx dx$",
+    "choices": ["$1$", "$0$", "$\\frac{\\pi}2}$", "$\\frac{\\sqrt{3}}{2}$"],
     "correctIndex": 0
   },
   {
@@ -32,109 +32,271 @@
   {
     "id": 6,
     "question": "Evaluate: $\\int{\\frac{1}{x-2}}dx$",
-    "choices": ["$\\ln \\left|x-2\\right|$", "1", "Does not exist", ""],
-    "correctIndex": 1
+    "choices": ["$\\ln \\left|x-2\\right|$", "$-(x-2)^{-1} + c$", "$\\ln \\left|x-2\\right|+c$", "$-(x-2)^{-1}$"],
+    "correctIndex": 2
   },
   {
     "id": 7,
-    "question": "Evaluate: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["", "", "", ""],
+    "question": "Evaluate: $2\\int_{-1}^{0}{5}dx $",
+    "choices": ["$5$", "$10$", "$-10$", "$-5$"],
     "correctIndex": 1
   },
   {
     "id": 8,
-    "question": "Evaluate: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["", "", "", ""],
-    "correctIndex": 1
+    "question": "Evaluate: $\\int{\\pi x}dx $",
+    "choices": ["$\\frac{\\pi x^2}{2}+c$", "$2\\pi x^2+c$", "$\\pi x^2+c$", "$\\pi$"],
+    "correctIndex": 0
   },
   {
     "id": 9,
-    "question": "Evaluate: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\int_{0}^{1}{x(x^2+1)} dx$",
+    "choices": ["$\\frac{3}{4} $", "$\\frac{x^4}{4} + \\frac{x^2}{2} +c$", "$x^4+x^2+c$", "$\\frac{1}{2}$"],
+    "correctIndex": 0
   },
   {
     "id": 10,
-    "question": "Evaluate: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{d}{dx} \\int_{4}^{x}{5x+4} dx$",
+    "choices": ["$5x+4$", "$\\frac{5}{2} x^2+4x-56$", "$5$", "Does not exist"],
+    "correctIndex": 0
   },
   {
     "id": 11,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\int_{x}^{0}{(\\sec x)^2}dx $",
+    "choices": ["$-\\tan x+c$", "$1-\\tan x+c$", "$\\tan x$", "$1+c$"],
+    "correctIndex": 0
   },
   {
     "id": 12,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{d\\pi }{dx} $",
+    "choices": ["$c$", "$1$", "$0$", "$\\pi x+c$"],
+    "correctIndex": 2
   },
   {
     "id": 13,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{dx^5}{dx} $",
+    "choices": ["$5x^4$", "$5x$", "$x^6/6$", "$x^6/6+c$"],
+    "correctIndex": 0
   },
   {
     "id": 14,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{d}{dx} \\cos x$",
+    "choices": ["$-\\sin x$", "$\\sin x$", "$\\sec x$", "$\\sin x + c$"],
+    "correctIndex": 0
   },
   {
     "id": 15,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{dx^{-1}}{dx}$",
+    "choices": ["$\\ln \\left|x\\right| $", "$\\frac{1}{x} $", "$-\\frac{1}{x}$", "$-\\frac{1}{x^2}$"],
+    "correctIndex": 3
   },
   {
     "id": 16,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{d}{dx}\\tan x$",
+    "choices": ["${\\sec x}^2$", "$\\frac{1}{1+x^2}$", "$\\arctan x$", "$\\cot x$"],
+    "correctIndex": 0
   },
   {
     "id": 17,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
+    "question": "Evaluate: $\\frac{d0}{dx}$",
+    "choices": ["Does not exist", "$0$", "$1$", "$x$"],
     "correctIndex": 1
   },
   {
     "id": 18,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{d}{dx}\\arccos x$",
+    "choices": ["$\\frac{1}{\\sqrt{x^2-1}}$", "$\\frac{1}{\\sqrt{1-x^2}}$", "$\\frac{x}{\\sqrt{1-x^2}}$", "$\\frac{x}{\\sqrt{x^2-1}}$"],
+    "correctIndex": 0
   },
   {
     "id": 19,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\frac{d}{dx}x\\sin x$",
+    "choices": ["$x\\cos x + \\sin x$", "$x\\cos x$", "$2x\\cos x$", "$2x\\cos x+x\\sin x$"],
+    "correctIndex": 0
   },
   {
     "id": 20,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\lim _{x\\rightarrow  \\infty}\\frac{x}{x^3} $",
+    "choices": ["$1$", "$\\frac{1}{3}$", "$0$", "$frac{1}{x^2}$"],
+    "correctIndex": 2
   },
   {
     "id": 21,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\lim _{x\\rightarrow  0}\\frac{500}{x} $",
+    "choices": ["Does not exist", "$500$", "$+\\infty $", "$1$"],
+    "correctIndex": 0
   },
   {
     "id": 22,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
-    "correctIndex": 1
+    "question": "Evaluate: $\\lim _{x\\rightarrow 4}4x^2$",
+    "choices": ["$64$", "$16$", "Does not exist", "$\\frac{1}{4}$"],
+    "correctIndex": 0
   },
   {
     "id": 23,
-    "question": "Find the limit: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
-    "choices": ["0", "1", "Does not exist", "Infinity"],
+    "question": "Evaluate: $\\int_{5}^{5}{\\frac{\\ln \\left|x^4-5x^4\\right| }{\\cot x -13} } dx$",
+    "choices": ["$\\frac{1015}{92}$", "$0$", "Does not exist", "$\\frac{451}{32\\pi +18}$"],
     "correctIndex": 1
+  },
+  {
+    "id": 24,
+    "question": "Evaluate: $\\int \\cos x \\, dx$",
+    "choices": ["$\\sin x + c$", "$\\cos x + c$", "$-\\cos x + c$", "$-\\sin x + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 25,
+    "question": "Evaluate: $\\int x e^x \\, dx$",
+    "choices": ["$e^x + x + c$", "$xe^x - e^x + c$", "$e^x + c$", "$xe^x + c$"],
+    "correctIndex": 1
+  },
+  {
+    "id": 26,
+    "question": "Find $\\frac{d}{dx} \\ln(x^2 + 1)$",
+    "choices": ["$\\frac{2x}{x^2+1}$", "$\\frac{1}{x^2+1}$", "$\\ln(x^2+1)$", "$2x\\ln(x)$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 27,
+    "question": "Evaluate: $\\lim_{x \\to 0} \\frac{\\sin x}{x}$",
+    "choices": ["$1$", "$0$", "$\\infty$", "$\\text{Does not exist}$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 28,
+    "question": "Find $\\frac{d}{dx}(x^3 \\ln x)$",
+    "choices": ["$3x^2\\ln x + x^2$", "$3x^2\\ln x + x^3$", "$x^3/x$", "$x^3 + 3\\ln x$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 29,
+    "question": "Evaluate: $\\int x^3 \\, dx$",
+    "choices": ["$\\frac{x^4}{4} + c$", "$3x^2 + c$", "$\\ln x + c$", "$x^2 + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 30,
+    "question": "Find $\\frac{d}{dx} e^{2x}$",
+    "choices": ["$2e^{2x}$", "$e^x$", "$2x e^x$", "$e^{2x}$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 31,
+    "question": "Evaluate: $\\int \\frac{1}{1+x^2} dx$",
+    "choices": ["$\\arctan x + c$", "$\\tan x + c$", "$\\ln |x^2+1| + c$", "$x + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 32,
+    "question": "Find $\\frac{d}{dx} \\tan x$",
+    "choices": ["$\\sec^2 x$", "$\\cot x$", "$\\csc x$", "$\\tan x$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 33,
+    "question": "Evaluate: $\\int \\sec x \\tan x \\, dx$",
+    "choices": ["$\\sec x + c$", "$\\tan x + c$", "$\\csc x + c$", "$\\sec x \\tan x + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 34,
+    "question": "Find the limit: $\\lim_{x \\to \\infty} \\frac{1}{x}$",
+    "choices": ["$0$", "$1$", "$\\infty$", "$\\text{Does not exist}$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 35,
+    "question": "Evaluate: $\\int x\\sqrt{x} dx$",
+    "choices": ["$\\frac{2}{5}x^{5/2} + c$", "$x^{3/2} + c$", "$x^2 + c$", "$\\frac{2}{3}x^{3/2} + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 36,
+    "question": "Find $\\frac{d}{dx} \\sqrt{x^2 + 1}$",
+    "choices": ["$\\frac{x}{\\sqrt{x^2 + 1}}$", "$\\frac{1}{2\\sqrt{x^2 + 1}}$", "$2x$", "$\\frac{1}{x}$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 37,
+    "question": "Evaluate: $\\int \\frac{1}{\\sqrt{1 - x^2}} dx$",
+    "choices": ["$\\arcsin x + c$", "$\\arccos x + c$", "$\\tan^{-1} x + c$", "$\\ln|x| + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 38,
+    "question": "Evaluate: $\\frac{d}{dx} \\arctan x$",
+    "choices": ["$\\frac{1}{1+x^2}$", "$\\frac{1}{\\sqrt{1 - x^2}}$", "$\\tan x$", "$1$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 39,
+    "question": "Find $\\frac{d}{dx} (\\ln |x|)$",
+    "choices": ["$\\frac{1}{x}$", "$\\ln x$", "$x$", "$\\frac{1}{|x|}$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 40,
+    "question": "Evaluate: $\\int \\frac{1}{x} dx$",
+    "choices": ["$\\ln|x| + c$", "$\\frac{1}{x} + c$", "$x + c$", "$x^2 + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 41,
+    "question": "Find $\\frac{d}{dx} (x^4 + 2x^2)$",
+    "choices": ["$4x^3 + 4x$", "$4x^3 + 2x$", "$x^3 + x$", "$8x$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 42,
+    "question": "Evaluate: $\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1}$",
+    "choices": ["$2$", "$0$", "$1$", "$\\infty$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 43,
+    "question": "Find $\\frac{d}{dx} \\sin(2x)$",
+    "choices": ["$2\\cos(2x)$", "$2\\sin(x)$", "$\\cos(2x)$", "$\\cos(x)$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 44,
+    "question": "Evaluate: $\\int e^{3x} dx$",
+    "choices": ["$\\frac{1}{3}e^{3x} + c$", "$3e^{x} + c$", "$e^x + c$", "$\\ln(3x) + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 45,
+    "question": "Find $\\frac{d}{dx} \\cos^2 x$",
+    "choices": ["$-2\\cos x \\sin x$", "$2\\cos x \\sin x$", "$\\sin x$", "$-\\sin x$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 46,
+    "question": "Evaluate: $\\lim_{x \\to 0} \\frac{1 - \\cos x}{x^2}$",
+    "choices": ["$\\frac{1}{2}$", "$1$", "$0$", "$\\infty$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 47,
+    "question": "Evaluate: $\\int (x^2 + 3x + 2) dx$",
+    "choices": ["$\\frac{x^3}{3} + \\frac{3x^2}{2} + 2x + c$", "$x^3 + 3x^2 + 2x + c$", "$x^2 + x + c$", "$x^3 + 6x^2 + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 48,
+    "question": "Find $\\frac{d}{dx} \\frac{1}{x^2}$",
+    "choices": ["$-\\frac{2}{x^3}$", "$\\frac{2}{x}$", "$-\\frac{1}{x^2}$", "$\\frac{1}{x^3}$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 49,
+    "question": "Evaluate: $\\int \\sin^2 x \\, dx$",
+    "choices": ["$\\frac{x}{2} - \\frac{\\sin(2x)}{4} + c$", "$\\frac{x}{2} + \\frac{\\cos(2x)}{2} + c$", "$\\sin x + c$", "$\\cos x + c$"],
+    "correctIndex": 0
+  },
+  {
+    "id": 50,
+    "question": "Find $\\frac{d}{dx} (x^5 \\cos x)$",
+    "choices": ["$5x^4 \\cos x - x^5 \\sin x$", "$5x^4 \\cos x + x^5 \\cos x$", "$5x^5 \\cos x$", "$-5x^4 \\sin x$"],
+    "correctIndex": 0
   }
 ]

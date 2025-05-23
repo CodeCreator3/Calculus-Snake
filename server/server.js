@@ -35,17 +35,25 @@ io.on("connection", (socket) => {
     if (sessions[roomCode]) {
       socket.join(roomCode);
       sessions[roomCode].players[socket.id] = {
-        x: 2,
-        y: 2,
+        x: Math.floor(Math.random() * sessions[roomCode].gridWidth),
+        y: Math.floor(Math.random() * sessions[roomCode].gridHeight),
         dir: "right",
         length: 3,
-        stunned: false,
+        color: getRandomColorHex(),
       };
       io.to(roomCode).emit("playerJoined", sessions[roomCode].players);
       console.log("Player joined room:", roomCode);
       
     }
   });
+
+  socket.on("setGridSize", ({ roomCode, gridWidth, gridHeight }) => {
+  if (sessions[roomCode]) {
+    sessions[roomCode].gridWidth = gridWidth;
+    sessions[roomCode].gridHeight = gridHeight;
+    console.log(`Grid size for ${roomCode}: ${gridWidth} x ${gridHeight}`);
+  }
+});
 
   socket.on("askQuestion", ({ roomCode }) => {
     const player = sessions[roomCode]?.players[socket.id];
@@ -57,7 +65,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("answer", ({ roomCode, correct }) => {
+  socket.on("answer", ({ roomCode, correct, index, correctIndex }) => {
     const player = sessions[roomCode]?.players[socket.id];
     if (player) {
       player.stunned = !correct;
@@ -66,7 +74,7 @@ io.on("connection", (socket) => {
           player.stunned = false;
         }, 10000);
       }
-      socket.emit("answerResult", correct);
+      socket.emit("answerResult", correct, index, correctIndex);
     }
   });
 
@@ -100,8 +108,12 @@ setInterval(() => {
     // move(sessions[roomCode]);
     io.to(roomCode).emit("stateUpdate", sessions[roomCode]);
   }
-}, 300);
+}, 20);
 
-server.listen(3000, () =>
-  console.log("Server running on http://localhost:3000")
+server.listen(3000, '192.168.8.127', () =>
+  console.log("Server running on http://192.168.8.127:3000")
 );
+
+function getRandomColorHex() {
+  return '#' + Math.floor(Math.random() * 16777215).toString(16);
+}
