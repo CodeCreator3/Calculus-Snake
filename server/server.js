@@ -26,7 +26,7 @@ io.on("connection", (socket) => {
 
   socket.on("createGame", () => {
     const roomCode = generateRoomCode();
-    sessions[roomCode] = { players: {}, food: [{ x: 20, y: 20 }] };
+    sessions[roomCode] = { players: {}, food: [] };
     socket.join(roomCode);
     socket.emit("gameCreated", roomCode);
   });
@@ -34,16 +34,25 @@ io.on("connection", (socket) => {
   socket.on("joinGame", ({ roomCode }) => {
     if (sessions[roomCode]) {
       socket.join(roomCode);
+      const x =Math.floor(Math.random() * (sessions[roomCode].gridWidth - 3));
+      const y = Math.floor(Math.random() * sessions[roomCode].gridHeight);
       sessions[roomCode].players[socket.id] = {
-        x: Math.floor(Math.random() * sessions[roomCode].gridWidth) +1,
-        y: Math.floor(Math.random() * sessions[roomCode].gridHeight) +1,
+        x: x,
+        y: y,
         dir: "right",
         length: 3,
+        bodyPoses: [{x: x + 3,y: y}, {x: x + 2,y: y}, {x: x + 1,y: y}],
         color: getRandomColorHex(),
       };
       io.to(roomCode).emit("playerJoined", sessions[roomCode].players);
       console.log("Player joined room:", roomCode);
-      
+      if (!sessions[roomCode].food) {
+        sessions[roomCode].food = [];
+      }
+      const foodLoc = generateRandomFoodLocation(sessions[roomCode]);
+      sessions[roomCode].food.push(foodLoc);
+
+      io.to(roomCode).emit("stateUpdate", sessions[roomCode]); // this includes food
     }
   });
 
@@ -68,12 +77,6 @@ io.on("connection", (socket) => {
   socket.on("answer", ({ roomCode, correct, index, correctIndex }) => {
     const player = sessions[roomCode]?.players[socket.id];
     if (player) {
-      player.stunned = !correct;
-      if (player.stunned) {
-        setTimeout(() => {
-          player.stunned = false;
-        }, 10000);
-      }
       socket.emit("answerResult", correct, index, correctIndex);
     }
   });
@@ -93,11 +96,24 @@ io.on("connection", (socket) => {
     // Basic movement logic
 
     const player = sessions[roomCode]?.players[socket.id];
+    player.bodyPoses.push({ x: player.x, y: player.y });
     if (!player.stunned){
         if (player.dir === "right") player.x += 1;
         else if (player.dir === "left") player.x -= 1;
         else if (player.dir === "up") player.y -= 1;
         else if (player.dir === "down") player.y += 1;
+    }
+
+    if(sessions[roomCode].food.some(f => f.x === player.x && f.y === player.y)) {
+      player.length ++;
+      const foodIndex = sessions[roomCode].food.findIndex(
+        f => f.x === player.x && f.y === player.y
+      );
+      if (foodIndex !== -1) {
+        sessions[roomCode].food.splice(foodIndex, 1);
+        const newFoodLoc = generateRandomFoodLocation(sessions[roomCode]);
+        sessions[roomCode].food.push(newFoodLoc);
+      }
     }
     
   });
@@ -115,12 +131,19 @@ server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-// Use for development
-// server.listen(3000, () => {
-//   console.log(`Visit: http://localhost:3000`);
-// });
-
-
 function getRandomColorHex() {
   return '#' + Math.floor(Math.random() * 16777215).toString(16);
+}
+
+function generateRandomFoodLocation(session) {
+  let x, y;
+  const players = Object.values(session.players);
+  do {
+    x = Math.floor(Math.random() * session.gridWidth);
+    y = Math.floor(Math.random() * session.gridHeight);
+  } while (
+    session.food.some(f => f.x === x && f.y === y) ||
+    players.some(p => p.x === x && p.y === y)
+  );
+  return { x, y };
 }

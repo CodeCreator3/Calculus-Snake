@@ -15,6 +15,8 @@ const zoomStep = 0.1;
 let isHost = false;
 let cameraVelocityX = 0;
 let cameraVelocityY = 0;
+const gridWidth = 50;
+const gridHeight = 20;
 
 function createGame() {
   socket.emit("createGame");
@@ -118,8 +120,7 @@ function randomizeQuestion(q) {
 
 socket.on("answerResult", (correct, index, correctIndex) => {
   if (answered) return;
-  if (correct) moves+=2;
-  document.getElementById("moveCounter").textContent = `Moves: ${moves}`;
+  if (correct) moves+=5;
   if (correct) {
     btns[index].style.backgroundColor = "#648268";
   } else {
@@ -147,7 +148,6 @@ window.addEventListener("keydown", (e) => {
     if (dir) socket.emit("changeDirection", { roomCode, dir });
     socket.emit("move", { roomCode });
     moves--;
-    document.getElementById("moveCounter").textContent = `Moves: ${moves}`;
   }
 });
 
@@ -169,18 +169,18 @@ canvas.addEventListener("wheel", (e) => {
   });
 
   canvas.addEventListener("mousemove", (e) => {
-  if (!isHost || !isDragging) return;
+    if (!isHost || !isDragging) return;
 
-  const dx = (e.clientX - dragStartX) / zoom;
-  const dy = (e.clientY - dragStartY) / zoom;
+    const dx = (e.clientX - dragStartX) / zoom;
+    const dy = (e.clientY - dragStartY) / zoom;
 
-  const sensitivity = 1.4; // smaller = less jumpy
-  cameraVelocityX = dx * sensitivity;
-  cameraVelocityY = dy * sensitivity;
+    const sensitivity = 1.4; // smaller = less jumpy
+    cameraVelocityX = dx * sensitivity;
+    cameraVelocityY = dy * sensitivity;
 
-  dragStartX = e.clientX;
-  dragStartY = e.clientY;
-});
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+  });
 
   canvas.addEventListener("mouseup", () => {
     isDragging = false;
@@ -234,6 +234,12 @@ socket.on("stateUpdate", (session) => {
     const p = session.players[id];
     ctx.fillStyle = p.color;
     ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
+    document.getElementById("moveCounter").textContent = `Moves: ${moves} Length: ${p.length}`;
+    if(p.bodyPoses.length > p.length)do{p.bodyPoses.shift()}while(p.bodyPoses.length > p.length);
+    for (const pos of p.bodyPoses) {
+      ctx.fillStyle = darkenColor(p.color, 50);
+      ctx.fillRect(pos.x * cellSize, pos.y * cellSize, cellSize, cellSize);
+    }
   }
 
   // Draw all food
@@ -247,5 +253,30 @@ socket.on("stateUpdate", (session) => {
   paintGrid();
 });
 
-const gridWidth = 50;
-const gridHeight = 20;
+function darkenColor(color, amount) {
+  const r = Math.max(0, parseInt(color.slice(1, 3), 16) - amount);
+  const g = Math.max(0, parseInt(color.slice(3, 5), 16) - amount);
+  const b = Math.max(0, parseInt(color.slice(5, 7), 16) - amount);
+
+  const rHex = r.toString(16).padStart(2, "0");
+  const gHex = g.toString(16).padStart(2, "0");
+  const bHex = b.toString(16).padStart(2, "0");
+
+  return `#${rHex}${gHex}${bHex}`;
+}
+
+socket.on("addFood", (session) => {
+  loc = generateRandomLocation(session);
+  session.food.push(loc)
+})
+
+function generateRandomLocation(session) {
+  let x;
+  let y;
+  do{
+  x = Math.floor(Math.random() * gridWidth);
+  y = Math.floor(Math.random() * gridHeight);
+  } while(session.food.some((obj) => obj.x === x && obj.y === y) || Object.values(session.players).some((obj) => obj.x === x && obj.y === y));
+  console.log("Food location: ", x, y);
+  return { x, y };
+}
