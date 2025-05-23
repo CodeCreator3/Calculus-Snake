@@ -110,10 +110,6 @@ setInterval(() => {
   }
 }, 20);
 
-server.listen(3000, '192.168.8.127', () =>
-  console.log("Server running on http://192.168.8.127:3000")
-);
-
 function getRandomColorHex() {
   return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
