@@ -6,9 +6,19 @@
     <title>Snake Calculus Game</title>
   </head>
   <body>
-    <script id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    ></script>
+    <script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  },
+  svg: {
+    fontCache: 'global'
+  }
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
     <div id="lobbyUI" align="center">
       <h1 id="gameTitle">Snake Calculus Game</h1>
       <button onclick="createGame()">Create Game</button>

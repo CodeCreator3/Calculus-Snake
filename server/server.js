@@ -10,13 +10,8 @@ const io = new Server(server);
 
 const fs = require("fs");
 
-try {
-  const raw = fs.readFileSync("questions.json", "utf8");
-  const questions = JSON.parse(raw);
-  console.log("Questions loaded:", questions);
-} catch (err) {
-  console.error("Failed to load questions.json:", err);
-}
+const raw = fs.readFileSync("questions.json", "utf8");
+const questions = JSON.parse(raw);
 
 app.use(express.static(path.join(__dirname, "../client")));
 
@@ -47,12 +42,12 @@ io.on("connection", (socket) => {
         stunned: false,
       };
       io.to(roomCode).emit("playerJoined", sessions[roomCode].players);
-      io.to(roomCode).emit("askQuestion", { roomCode });
+      console.log("Player joined room:", roomCode);
+      
     }
   });
 
   socket.on("askQuestion", ({ roomCode }) => {
-    console.log("asking question");
     const player = sessions[roomCode]?.players[socket.id];
     if (player) {
       socket.emit(
@@ -71,6 +66,7 @@ io.on("connection", (socket) => {
           player.stunned = false;
         }, 10000);
       }
+      socket.emit("answerResult", correct);
     }
   });
 
@@ -84,23 +80,24 @@ io.on("connection", (socket) => {
       delete sessions[roomCode].players[socket.id];
     }
   });
-});
 
-function updateGameState(session) {
-  // Basic movement logic
-  for (const id in session.players) {
-    const player = session.players[id];
-    if (player.stunned) continue;
-    if (player.dir === "right") player.x += 1;
-    else if (player.dir === "left") player.x -= 1;
-    else if (player.dir === "up") player.y -= 1;
-    else if (player.dir === "down") player.y += 1;
-  }
-}
+  socket.on("move", ({ roomCode }) => {
+    // Basic movement logic
+
+    const player = sessions[roomCode]?.players[socket.id];
+    if (!player.stunned){
+        if (player.dir === "right") player.x += 1;
+        else if (player.dir === "left") player.x -= 1;
+        else if (player.dir === "up") player.y -= 1;
+        else if (player.dir === "down") player.y += 1;
+    }
+    
+  });
+});
 
 setInterval(() => {
   for (const roomCode in sessions) {
-    updateGameState(sessions[roomCode]);
+    // move(sessions[roomCode]);
     io.to(roomCode).emit("stateUpdate", sessions[roomCode]);
   }
 }, 300);
