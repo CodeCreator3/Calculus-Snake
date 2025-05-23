@@ -44,12 +44,13 @@ function paintGrid() {
 function joinGame() {
   const code = document.getElementById("roomCode").value;
   roomCode = code;
-  socket.emit("joinGame", { roomCode: code });
-  socket.emit("askQuestion", { roomCode: code });
   // Hide the lobby UI
   document.getElementById("lobbyUI").style.display = "none";
   document.getElementById("moveCounter").style.display = "block";
   socket.emit("setGridSize", { roomCode, gridWidth, gridHeight });
+  socket.emit("joinGame", { roomCode: code });
+  socket.emit("askQuestion", { roomCode: code });
+  
 }
 
 socket.on("question", (q) => {
@@ -107,7 +108,7 @@ function randomizeQuestion(q) {
   for (let i = 0; i < q.choices.length; i++) {
     newChoices[i] = q.choices[newIndices[i]];
   }
-  let newCorrectIndex = newIndices[q.correctIndex];
+  let newCorrectIndex = newIndices.findIndex((element) => element == q.correctIndex);
   return {
     question: q.question,
     choices: newChoices,
@@ -117,7 +118,7 @@ function randomizeQuestion(q) {
 
 socket.on("answerResult", (correct, index, correctIndex) => {
   if (answered) return;
-  if (correct) moves++;
+  if (correct) moves+=2;
   document.getElementById("moveCounter").textContent = `Moves: ${moves}`;
   if (correct) {
     btns[index].style.backgroundColor = "#648268";
@@ -233,6 +234,14 @@ socket.on("stateUpdate", (session) => {
     const p = session.players[id];
     ctx.fillStyle = p.color;
     ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
+  }
+
+  // Draw all food
+  for(const food of session.food) {
+    ctx.fillStyle = "#FF0000";
+    ctx.beginPath();
+    ctx.arc(food.x * cellSize + cellSize*0.5, food.y * cellSize+ cellSize*0.5, cellSize * 0.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   paintGrid();

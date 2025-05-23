@@ -26,7 +26,7 @@ io.on("connection", (socket) => {
 
   socket.on("createGame", () => {
     const roomCode = generateRoomCode();
-    sessions[roomCode] = { players: {}, food: { x: 20, y: 20 } };
+    sessions[roomCode] = { players: {}, food: [{ x: 20, y: 20 }] };
     socket.join(roomCode);
     socket.emit("gameCreated", roomCode);
   });
@@ -35,8 +35,8 @@ io.on("connection", (socket) => {
     if (sessions[roomCode]) {
       socket.join(roomCode);
       sessions[roomCode].players[socket.id] = {
-        x: Math.floor(Math.random() * sessions[roomCode].gridWidth),
-        y: Math.floor(Math.random() * sessions[roomCode].gridHeight),
+        x: Math.floor(Math.random() * sessions[roomCode].gridWidth) +1,
+        y: Math.floor(Math.random() * sessions[roomCode].gridHeight) +1,
         dir: "right",
         length: 3,
         color: getRandomColorHex(),
@@ -114,6 +114,12 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Use for development
+// server.listen(3000, () => {
+//   console.log(`Visit: http://localhost:3000`);
+// });
+
 
 function getRandomColorHex() {
   return '#' + Math.floor(Math.random() * 16777215).toString(16);

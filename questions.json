@@ -20,7 +20,7 @@
   {
     "id": 4,
     "question": "Evaluate: $\\int_0^{\\frac{\\pi}{2}} \\sinx dx$",
-    "choices": ["$1$", "$0$", "$\\frac{\\pi}2}$", "$\\frac{\\sqrt{3}}{2}$"],
+    "choices": ["$1$", "$0$", "$\\frac{\\pi}{2}$", "$\\frac{\\sqrt{3}}{2}$"],
     "correctIndex": 0
   },
   {
