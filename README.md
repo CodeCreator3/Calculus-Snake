@@ -43,7 +43,7 @@ A multiplayer, synchronous Snake game where players solve calculus questions to 
     Edit
     node server/server.js
     Open the game
-    ```bash
+    ```
 
     Visit http://localhost:3000 in your browser
     (Players must be on the same network unless deployed)
