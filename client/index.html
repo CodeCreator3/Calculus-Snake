@@ -7,23 +7,29 @@
   </head>
   <body>
     <script>
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
-  },
-  svg: {
-    fontCache: 'global'
-  }
-};
-</script>
-<script type="text/javascript" id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
-</script>
+      MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+        },
+        svg: {
+          fontCache: "global",
+        },
+      };
+    </script>
+    <script
+      type="text/javascript"
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+    ></script>
     <div id="lobbyUI" align="center">
       <h1 id="gameTitle">Snake Calculus Game</h1>
       <button onclick="createGame()">Create Game</button>
       <input type="text" id="roomCode" placeholder="Room Code" />
-      <button onclick="joinGame()">Join Game</button>
+      <button onclick="askUsername()">Join Game</button>
       <style>
         #gameTitle {
           color: white;
@@ -32,6 +38,14 @@ MathJax = {
       </style>
     </div>
 
+    <style>
+      #lobbyUI {
+        position: absolute;
+        z-index: 999;
+        left: 40%;
+      }
+    </style>
+
     <div id="overlay">
       <p id="roomDisplay" align="center"></p>
       <style>
@@ -39,9 +53,67 @@ MathJax = {
           color: white;
           font-family: sans-serif;
           font-size: 50px;
+          z-index: 999;
+          position: absolute;
+          left: 35%;
         }
       </style>
     </div>
+
+    <div id="usernameInput">
+      <input type="text" id="username" placeholder="Enter your name" />
+      <button id="enterGameButton" onclick="joinGame()">Enter Game</button>
+      <style>
+        #username {
+          position: absolute;
+          top: 0px;
+          left: 0px;
+          background-color: #222;
+          color: white;
+          border-radius: 12px;
+          padding: 16px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+          font-family: sans-serif;
+          z-index: 999;
+        }
+        #enterGameButton {
+          position: absolute;
+          top: 0px;
+          left: 200px;
+          background-color: #222;
+          color: white;
+          border-radius: 12px;
+          padding: 16px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+          font-family: sans-serif;
+          z-index: 999;
+        }
+      </style>
+    </div>
+    <style>
+      #usernameInput {
+        display: none;
+        position: absolute;
+        top: 10%;
+        left: 40%;
+      }
+    </style>
+    <button id="startGameButton" onclick="startGame()">Start Game</button>
+    <style>
+      #startGameButton {
+        display: none;
+        position: absolute;
+        top: 120px;
+        left: 45%;
+        background-color: #222;
+        color: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        font-family: sans-serif;
+        z-index: 999;
+      }
+    </style>
 
     <div id="questionPanel">
       <p id="questionText"></p>
@@ -87,6 +159,21 @@ MathJax = {
       </style>
     </div>
 
+    <p id="awaitingText">Awaiting host to start the game...</p>
+    <style>
+      #awaitingText {
+        position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-family: sans-serif;
+        font-size: 24px;
+        z-index: 999;
+        display: none;
+      }
+    </style>
+
     <canvas id="gameCanvas"></canvas>
 
     <style>
@@ -104,20 +191,132 @@ MathJax = {
         width: 100vw;
         height: 100vh;
       }
+      #gameCanvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;
+      }
     </style>
-    <div id="moveCounter" style="
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    color: white;
-    font-size: 32px;
-    font-family: Arial, sans-serif;
-    background: rgba(0,0,0,0.5);
-    padding: 5px 10px;
-    border-radius: 5px;
-    display: none;
-  ">Moves: 0</div>
+    <div
+      id="moveCounter"
+      style="
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        color: white;
+        font-size: 32px;
+        font-family: Arial, sans-serif;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 5px;
+        display: none;
+        z-index: 999;
+      "
+    >
+      Moves: 0
+    </div>
+    <div id="timerDisplay">Time: -1</div>
+    <style>
+      #timerDisplay {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        color: white;
+        font-size: 24px;
+        font-family: Arial, sans-serif;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 5px;
+        z-index: 999;
+        display: none; /* Initially hidden */
+      }
+    </style>
+    <script>
+      class CountdownTimer {
+        constructor(duration, onTick, onComplete) {
+          this.duration = duration;
+          this.remaining = duration;
+          this.onTick = onTick;
+          this.onComplete = onComplete;
+          this.interval = null;
+        }
+
+        start() {
+          this.stop(); // prevent overlap
+          this.remaining = this.duration;
+          this.onTick?.(this.remaining);
+          this.interval = setInterval(() => {
+            this.remaining--;
+            this.onTick?.(this.remaining);
+            if (this.remaining <= 0) {
+              this.stop();
+              this.onComplete?.();
+            }
+          }, 1000);
+        }
+
+        stop() {
+          clearInterval(this.interval);
+          this.interval = null;
+        }
+
+        reset(duration) {
+          this.duration = duration;
+          this.start();
+        }
+      }
+
+      // Example usage:
+      const timerDisplay = document.getElementById("timerDisplay");
+
+      const questionTimer = new CountdownTimer(
+        30,
+        (time) => {
+          timerDisplay.textContent = `Time: ${time}`;
+        },
+        () => {
+          timerDisplay.textContent = "Time's up!";
+          // You could emit an answer timeout here
+        }
+      );
+
+      // To start it when a question is shown:
+      // questionTimer.start();
+    </script>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="game.js"></script>
+
+    <div
+      id="leaderboard"
+      style="
+        display: none;
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        font-family: sans-serif;
+        z-index: 999;
+        max-height: 300px;
+        overflow-y: auto;
+      "
+    >
+      <h3>Leaderboard</h3>
+      <ul
+        id="leaderboardList"
+        style="list-style: none; padding: 0; margin: 0"
+      ></ul>
+    </div>
+
+    <div id="finalLeaderboard" style="display:none; color: white;">
+  <h2>Final Leaderboard</h2>
+  <ul id="finalLeaderboardList" style="list-style: none; padding: 0;"></ul>
+</div>
+
+<div id="resultScreen" style="display:none; color: white; text-align: center;"></div>
   </body>
 </html>

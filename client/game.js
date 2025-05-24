@@ -17,13 +17,16 @@ let cameraVelocityX = 0;
 let cameraVelocityY = 0;
 const gridWidth = 50;
 const gridHeight = 20;
+let globalTimer;
 
 function createGame() {
   socket.emit("createGame");
+  
   isHost = true; // set flag
   socket.on("gameCreated", (code) => {
     roomCode = code;
     document.getElementById("roomDisplay").innerText = "Room Code: " + code;
+    document.getElementById("startGameButton").style.display = "block";
 
     console.log("Game created with code: " + code);
 
@@ -32,6 +35,12 @@ function createGame() {
 
     document.getElementById("questionPanel").style.display = "none";
   });
+}
+
+function startGame() {
+  console.log("Starting game with room code: " + roomCode);
+  socket.emit("startGame", {roomCode});
+  document.getElementById("startGameButton").style.display = "none";
 }
 
 function paintGrid() {
@@ -43,19 +52,26 @@ function paintGrid() {
   }
 }
 
+function askUsername(){
+  document.getElementById("usernameInput").style.display = "block";
+  document.getElementById("lobbyUI").style.display = "none";
+}
+
 function joinGame() {
+  document.getElementById("usernameInput").style.display = "none";
   const code = document.getElementById("roomCode").value;
   roomCode = code;
+
+  const username = document.getElementById("username").value.trim();
   // Hide the lobby UI
   document.getElementById("lobbyUI").style.display = "none";
   document.getElementById("moveCounter").style.display = "block";
   socket.emit("setGridSize", { roomCode, gridWidth, gridHeight });
-  socket.emit("joinGame", { roomCode: code });
-  socket.emit("askQuestion", { roomCode: code });
-  
+  socket.emit("joinGame", { roomCode: code, username: username });
 }
 
 socket.on("question", (q) => {
+  if(isHost) return; // Host should not receive questions
   const newQ = randomizeQuestion(q);
   console.log("Received question:", newQ);
 
@@ -95,6 +111,17 @@ socket.on("question", (q) => {
 
   // Show panel
   panel.style.display = "block";
+});
+
+socket.on("gameStatus", ({ gameStarted }) => {
+  console.log("Game status received:", gameStarted);
+  if (gameStarted) {
+    // Hide waiting text and show question panel (server will soon emit a question)
+    document.getElementById("awaitingText").style.display = "none";
+  } else {
+    // Show awaiting message
+    document.getElementById("awaitingText").style.display = "block";
+  }
 });
 
 function randomizeQuestion(q) {
@@ -137,6 +164,25 @@ socket.on("answerResult", (correct, index, correctIndex) => {
   );
 });
 
+socket.on("startTimer", ({ duration }) => {
+  let timerDisplay = document.getElementById("timerDisplay");
+  timerDisplay.style.display = "block";
+  if (globalTimer) globalTimer.stop();
+
+  globalTimer = new CountdownTimer(
+    duration,
+    (time) => {
+      timerDisplay.textContent = `Time: ${time}`;
+    },
+    () => {
+      timerDisplay.textContent = "Time's up!";
+      socket.emit("endGame", roomCode);
+    }
+  );
+
+  globalTimer.start();
+});
+
 window.addEventListener("keydown", (e) => {
   if (moves > 0) {
     const key = e.key;
@@ -147,8 +193,12 @@ window.addEventListener("keydown", (e) => {
     if (key === "ArrowRight") dir = "right";
     if (dir) socket.emit("changeDirection", { roomCode, dir });
     socket.emit("move", { roomCode });
-    moves--;
+    // moves--;
   }
+});
+
+socket.on("moved", () => {
+  moves--;
 });
 
 canvas.addEventListener("wheel", (e) => {
@@ -229,19 +279,6 @@ socket.on("stateUpdate", (session) => {
   ctx.scale(zoom, zoom);
   ctx.translate(-cameraX, -cameraY);
 
-  // Draw all players
-  for (const id in session.players) {
-    const p = session.players[id];
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
-    document.getElementById("moveCounter").textContent = `Moves: ${moves} Length: ${p.length}`;
-    if(p.bodyPoses.length > p.length)do{p.bodyPoses.shift()}while(p.bodyPoses.length > p.length);
-    for (const pos of p.bodyPoses) {
-      ctx.fillStyle = darkenColor(p.color, 50);
-      ctx.fillRect(pos.x * cellSize, pos.y * cellSize, cellSize, cellSize);
-    }
-  }
-
   // Draw all food
   for(const food of session.food) {
     ctx.fillStyle = "#FF0000";
@@ -250,7 +287,39 @@ socket.on("stateUpdate", (session) => {
     ctx.fill();
   }
 
+  // Draw all players
+  for (const id in session.players) {
+    const p = session.players[id];
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
+    document.getElementById("moveCounter").textContent = `Moves: ${moves} Length: ${p.length + 1}`; // add 1 to length to account for the head
+    for (const pos of p.bodyPoses) {
+      ctx.fillStyle = darkenColor(p.color, 50);
+      ctx.fillRect(pos.x * cellSize, pos.y * cellSize, cellSize, cellSize);
+    }
+    ctx.fillStyle = "white";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(p.username || "?", p.x * cellSize + cellSize / 2, p.y * cellSize - 5);
+  }
+
   paintGrid();
+
+  if (isHost) {
+    const leaderboard = document.getElementById("leaderboard");
+    const list = document.getElementById("leaderboardList");
+    leaderboard.style.display = "block";
+
+    const players = Object.values(session.players);
+    players.sort((a, b) => b.length - a.length); // 🔢 Sort by length
+
+    list.innerHTML = "";
+    players.forEach((p) => {
+      const li = document.createElement("li");
+      li.textContent = `${p.username || "??"} — Length: ${p.length + 1}`;
+      list.appendChild(li);
+    });
+  }
 });
 
 function darkenColor(color, amount) {
@@ -280,3 +349,41 @@ function generateRandomLocation(session) {
   console.log("Food location: ", x, y);
   return { x, y };
 }
+
+socket.on("endGame", ({ players }) => {
+  // Hide everything else
+  document.getElementById("gameCanvas").style.display = "none";
+  document.getElementById("questionPanel").style.display = "none";
+  document.getElementById("moveCounter").style.display = "none";
+  document.getElementById("timerDisplay").style.display = "none";
+  document.getElementById("leaderboard").style.display = "none";
+
+  if (isHost) {
+    // ✅ HOST: show leaderboard
+    const finalLeaderboard = document.getElementById("finalLeaderboard");
+    const finalList = document.getElementById("finalLeaderboardList");
+    finalLeaderboard.style.display = "block";
+    finalList.innerHTML = "";
+
+    const sorted = Object.values(players).sort((a, b) => b.length - a.length);
+    sorted.forEach((p, index) => {
+      const li = document.createElement("li");
+      li.textContent = `${index + 1}. ${p.username || "??"} — Length: ${p.length + 1}`;
+      finalList.appendChild(li);
+    });
+
+  } else {
+    // ✅ PLAYER: show own rank
+    const player = players[socket.id];
+    const sorted = Object.values(players).sort((a, b) => b.length - a.length);
+    const rank = sorted.findIndex(p => p === player) + 1;
+
+    const resultScreen = document.getElementById("resultScreen");
+    resultScreen.innerHTML = `
+      <h2>Game Over</h2>
+      <p>Your final rank: <strong>#${rank}</strong></p>
+      <p>Your final length: <strong>${player.length + 1}</strong></p>
+    `;
+    resultScreen.style.display = "block";
+  }
+});

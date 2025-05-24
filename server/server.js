@@ -26,14 +26,15 @@ io.on("connection", (socket) => {
 
   socket.on("createGame", () => {
     const roomCode = generateRoomCode();
-    sessions[roomCode] = { players: {}, food: [] };
+    sessions[roomCode] = { players: {}, food: [], gameStarted: false};
     socket.join(roomCode);
     socket.emit("gameCreated", roomCode);
   });
 
-  socket.on("joinGame", ({ roomCode }) => {
+  socket.on("joinGame", ({ roomCode, username }) => {
     if (sessions[roomCode]) {
       socket.join(roomCode);
+      socket.emit("gameStatus", { gameStarted: sessions[roomCode].gameStarted });
       const x =Math.floor(Math.random() * (sessions[roomCode].gridWidth - 3));
       const y = Math.floor(Math.random() * sessions[roomCode].gridHeight);
       sessions[roomCode].players[socket.id] = {
@@ -43,6 +44,7 @@ io.on("connection", (socket) => {
         length: 3,
         bodyPoses: [{x: x + 3,y: y}, {x: x + 2,y: y}, {x: x + 1,y: y}],
         color: getRandomColorHex(),
+        username: username,
       };
       io.to(roomCode).emit("playerJoined", sessions[roomCode].players);
       console.log("Player joined room:", roomCode);
@@ -53,6 +55,9 @@ io.on("connection", (socket) => {
       sessions[roomCode].food.push(foodLoc);
 
       io.to(roomCode).emit("stateUpdate", sessions[roomCode]); // this includes food
+      if(sessions[roomCode].gameStarted) {
+        askQuestion(roomCode);
+      }
     }
   });
 
@@ -65,6 +70,10 @@ io.on("connection", (socket) => {
 });
 
   socket.on("askQuestion", ({ roomCode }) => {
+    askQuestion(roomCode);
+  });
+
+  function askQuestion(roomCode){
     const player = sessions[roomCode]?.players[socket.id];
     if (player) {
       socket.emit(
@@ -72,6 +81,13 @@ io.on("connection", (socket) => {
         questions[Math.floor(Math.random() * questions.length)]
       );
     }
+  }
+
+  socket.on("startGame", ({ roomCode }) => {
+    sessions[roomCode].gameStarted = true;
+    io.to(roomCode).emit("gameStatus", { gameStarted: sessions[roomCode].gameStarted });
+    io.to(roomCode).emit("question", questions[Math.floor(Math.random() * questions.length)]);
+    io.to(roomCode).emit("startTimer", { duration: 10 });
   });
 
   socket.on("answer", ({ roomCode, correct, index, correctIndex }) => {
@@ -96,13 +112,25 @@ io.on("connection", (socket) => {
     // Basic movement logic
 
     const player = sessions[roomCode]?.players[socket.id];
-    player.bodyPoses.push({ x: player.x, y: player.y });
+    let newLoc = { x: player.x, y: player.y };
     if (!player.stunned){
-        if (player.dir === "right") player.x += 1;
-        else if (player.dir === "left") player.x -= 1;
-        else if (player.dir === "up") player.y -= 1;
-        else if (player.dir === "down") player.y += 1;
+        if (player.dir === "right") newLoc.x += 1;
+        else if (player.dir === "left") newLoc.x -= 1;
+        else if (player.dir === "up") newLoc.y -= 1;
+        else if (player.dir === "down") newLoc.y += 1;
     }
+
+    if(locOccupied(sessions[roomCode], newLoc.x, newLoc.y, false)) return;
+
+    player.bodyPoses.push({ x: player.x, y: player.y });
+
+    // Trim body to correct length (on the server!)
+    while (player.bodyPoses.length > player.length) {
+      player.bodyPoses.shift();
+    }
+
+    player.x = newLoc.x;
+    player.y = newLoc.y;
 
     if(sessions[roomCode].food.some(f => f.x === player.x && f.y === player.y)) {
       player.length ++;
@@ -116,7 +144,17 @@ io.on("connection", (socket) => {
       }
     }
     
+    socket.emit("moved");
   });
+
+  socket.on("endGame", (roomCode) => {
+  const session = sessions[roomCode];
+  if (!session) return;
+
+  io.to(roomCode).emit("endGame", {
+    players: session.players
+  });
+});
 });
 
 setInterval(() => {
@@ -137,13 +175,20 @@ function getRandomColorHex() {
 
 function generateRandomFoodLocation(session) {
   let x, y;
-  const players = Object.values(session.players);
   do {
     x = Math.floor(Math.random() * session.gridWidth);
     y = Math.floor(Math.random() * session.gridHeight);
   } while (
-    session.food.some(f => f.x === x && f.y === y) ||
-    players.some(p => p.x === x && p.y === y)
+    locOccupied(session, x, y)
   );
   return { x, y };
+}
+
+function locOccupied(session, x, y, includeFood = true) {
+  const players = Object.values(session.players);
+  return (
+    (session.food.some(f => f.x === x && f.y === y) &&includeFood) ||
+    players.some(p => p.x === x && p.y === y || p.bodyPoses.some(p => p.x === x && p.y === y)) ||
+    x < 0 || x >= session.gridWidth || y < 0 || y >= session.gridHeight
+  );
 }
