@@ -87,7 +87,7 @@ io.on("connection", (socket) => {
     sessions[roomCode].gameStarted = true;
     io.to(roomCode).emit("gameStatus", { gameStarted: sessions[roomCode].gameStarted });
     io.to(roomCode).emit("question", questions[Math.floor(Math.random() * questions.length)]);
-    io.to(roomCode).emit("startTimer", { duration: 10 });
+    io.to(roomCode).emit("startTimer", { duration: 600 });
   });
 
   socket.on("answer", ({ roomCode, correct, index, correctIndex }) => {
