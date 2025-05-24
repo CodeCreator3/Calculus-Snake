@@ -34,17 +34,16 @@ A multiplayer, synchronous Snake game where players solve calculus questions to 
 
     Install dependencies
 
-    bash
     Copy
     Edit
     npm install
     Run the server
 
-    bash
     Copy
     Edit
     node server/server.js
     Open the game
+    ```bash
 
     Visit http://localhost:3000 in your browser
     (Players must be on the same network unless deployed)
@@ -105,13 +104,13 @@ A multiplayer, synchronous Snake game where players solve calculus questions to 
     Supports LaTeX via MathJax.
 
 ## ✅ To Do / Improvements
- Support touch/mouse for mobile play
+    Support touch/mouse for mobile play
 
- Add question categories (derivatives, integrals, limits)
+    Add question categories (derivatives, integrals, limits)
 
- Add animations/sound effects
+    Add animations/sound effects
 
- Add a game replay mode for classrooms
+    Add a game replay mode for classrooms
 
 ## 📚 Credits
     Made with 💛 for classrooms using:
