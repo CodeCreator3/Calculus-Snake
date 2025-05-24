@@ -16,6 +16,7 @@ const questions = JSON.parse(raw);
 app.use(express.static(path.join(__dirname, "../client")));
 
 const sessions = {}; // { roomCode: { players, food } }
+const sessionTimers = {};
 
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -26,7 +27,7 @@ io.on("connection", (socket) => {
 
   socket.on("createGame", () => {
     const roomCode = generateRoomCode();
-    sessions[roomCode] = { players: {}, food: [], gameStarted: false};
+    sessions[roomCode] = { players: {}, food: [], gameStarted: false };
     socket.join(roomCode);
     socket.emit("gameCreated", roomCode);
   });
@@ -34,15 +35,21 @@ io.on("connection", (socket) => {
   socket.on("joinGame", ({ roomCode, username }) => {
     if (sessions[roomCode]) {
       socket.join(roomCode);
-      socket.emit("gameStatus", { gameStarted: sessions[roomCode].gameStarted });
-      const x =Math.floor(Math.random() * (sessions[roomCode].gridWidth - 3));
+      socket.emit("gameStatus", {
+        gameStarted: sessions[roomCode].gameStarted,
+      });
+      const x = Math.floor(Math.random() * (sessions[roomCode].gridWidth - 3));
       const y = Math.floor(Math.random() * sessions[roomCode].gridHeight);
       sessions[roomCode].players[socket.id] = {
         x: x,
         y: y,
         dir: "right",
         length: 3,
-        bodyPoses: [{x: x + 3,y: y}, {x: x + 2,y: y}, {x: x + 1,y: y}],
+        bodyPoses: [
+          { x: x + 3, y: y },
+          { x: x + 2, y: y },
+          { x: x + 1, y: y },
+        ],
         color: getRandomColorHex(),
         username: username,
       };
@@ -55,25 +62,25 @@ io.on("connection", (socket) => {
       sessions[roomCode].food.push(foodLoc);
 
       io.to(roomCode).emit("stateUpdate", sessions[roomCode]); // this includes food
-      if(sessions[roomCode].gameStarted) {
+      if (sessions[roomCode].gameStarted) {
         askQuestion(roomCode);
       }
     }
   });
 
   socket.on("setGridSize", ({ roomCode, gridWidth, gridHeight }) => {
-  if (sessions[roomCode]) {
-    sessions[roomCode].gridWidth = gridWidth;
-    sessions[roomCode].gridHeight = gridHeight;
-    console.log(`Grid size for ${roomCode}: ${gridWidth} x ${gridHeight}`);
-  }
-});
+    if (sessions[roomCode]) {
+      sessions[roomCode].gridWidth = gridWidth;
+      sessions[roomCode].gridHeight = gridHeight;
+      console.log(`Grid size for ${roomCode}: ${gridWidth} x ${gridHeight}`);
+    }
+  });
 
   socket.on("askQuestion", ({ roomCode }) => {
     askQuestion(roomCode);
   });
 
-  function askQuestion(roomCode){
+  function askQuestion(roomCode) {
     const player = sessions[roomCode]?.players[socket.id];
     if (player) {
       socket.emit(
@@ -85,9 +92,31 @@ io.on("connection", (socket) => {
 
   socket.on("startGame", ({ roomCode }) => {
     sessions[roomCode].gameStarted = true;
-    io.to(roomCode).emit("gameStatus", { gameStarted: sessions[roomCode].gameStarted });
-    io.to(roomCode).emit("question", questions[Math.floor(Math.random() * questions.length)]);
-    io.to(roomCode).emit("startTimer", { duration: 600 });
+    io.to(roomCode).emit("gameStatus", {
+      gameStarted: sessions[roomCode].gameStarted,
+    });
+    io.to(roomCode).emit(
+      "question",
+      questions[Math.floor(Math.random() * questions.length)]
+    );
+    const session = sessions[roomCode];
+    session.gameStarted = true;
+    session.remainingTime = 600; // Set initial time for the game
+    if (!sessionTimers[roomCode]) {
+      sessionTimers[roomCode] = setInterval(() => {
+        const session = sessions[roomCode];
+        if (!session) return;
+
+        session.remainingTime--;
+        io.to(roomCode).emit("timerUpdate", { time: session.remainingTime });
+
+        if (session.remainingTime <= 0) {
+          clearInterval(sessionTimers[roomCode]);
+          delete sessionTimers[roomCode];
+          io.to(roomCode).emit("endGame", { players: session.players });
+        }
+      }, 1000);
+    }
   });
 
   socket.on("answer", ({ roomCode, correct, index, correctIndex }) => {
@@ -113,14 +142,14 @@ io.on("connection", (socket) => {
 
     const player = sessions[roomCode]?.players[socket.id];
     let newLoc = { x: player.x, y: player.y };
-    if (!player.stunned){
-        if (player.dir === "right") newLoc.x += 1;
-        else if (player.dir === "left") newLoc.x -= 1;
-        else if (player.dir === "up") newLoc.y -= 1;
-        else if (player.dir === "down") newLoc.y += 1;
+    if (!player.stunned) {
+      if (player.dir === "right") newLoc.x += 1;
+      else if (player.dir === "left") newLoc.x -= 1;
+      else if (player.dir === "up") newLoc.y -= 1;
+      else if (player.dir === "down") newLoc.y += 1;
     }
 
-    if(locOccupied(sessions[roomCode], newLoc.x, newLoc.y, false)) return;
+    if (locOccupied(sessions[roomCode], newLoc.x, newLoc.y, false)) return;
 
     player.bodyPoses.push({ x: player.x, y: player.y });
 
@@ -132,10 +161,12 @@ io.on("connection", (socket) => {
     player.x = newLoc.x;
     player.y = newLoc.y;
 
-    if(sessions[roomCode].food.some(f => f.x === player.x && f.y === player.y)) {
-      player.length ++;
+    if (
+      sessions[roomCode].food.some((f) => f.x === player.x && f.y === player.y)
+    ) {
+      player.length++;
       const foodIndex = sessions[roomCode].food.findIndex(
-        f => f.x === player.x && f.y === player.y
+        (f) => f.x === player.x && f.y === player.y
       );
       if (foodIndex !== -1) {
         sessions[roomCode].food.splice(foodIndex, 1);
@@ -143,24 +174,23 @@ io.on("connection", (socket) => {
         sessions[roomCode].food.push(newFoodLoc);
       }
     }
-    
+
     socket.emit("moved");
   });
 
   socket.on("endGame", (roomCode) => {
-  const session = sessions[roomCode];
-  if (!session) return;
+    const session = sessions[roomCode];
+    if (!session) return;
 
-  io.to(roomCode).emit("endGame", {
-    players: session.players
+    io.to(roomCode).emit("endGame", {
+      players: session.players,
+    });
   });
-});
 });
 
 setInterval(() => {
   for (const roomCode in sessions) {
-    // move(sessions[roomCode]);
-    io.to(roomCode).emit("stateUpdate", sessions[roomCode]);
+io.to(roomCode).emit("stateUpdate", sessions[roomCode]);
   }
 }, 20);
 
@@ -170,7 +200,7 @@ server.listen(PORT, () => {
 });
 
 function getRandomColorHex() {
-  return '#' + Math.floor(Math.random() * 16777215).toString(16);
+  return "#" + Math.floor(Math.random() * 16777215).toString(16);
 }
 
 function generateRandomFoodLocation(session) {
@@ -178,17 +208,22 @@ function generateRandomFoodLocation(session) {
   do {
     x = Math.floor(Math.random() * session.gridWidth);
     y = Math.floor(Math.random() * session.gridHeight);
-  } while (
-    locOccupied(session, x, y)
-  );
+  } while (locOccupied(session, x, y));
   return { x, y };
 }
 
 function locOccupied(session, x, y, includeFood = true) {
   const players = Object.values(session.players);
   return (
-    (session.food.some(f => f.x === x && f.y === y) &&includeFood) ||
-    players.some(p => p.x === x && p.y === y || p.bodyPoses.some(p => p.x === x && p.y === y)) ||
-    x < 0 || x >= session.gridWidth || y < 0 || y >= session.gridHeight
+    (session.food.some((f) => f.x === x && f.y === y) && includeFood) ||
+    players.some(
+      (p) =>
+        (p.x === x && p.y === y) ||
+        p.bodyPoses.some((p) => p.x === x && p.y === y)
+    ) ||
+    x < 0 ||
+    x >= session.gridWidth ||
+    y < 0 ||
+    y >= session.gridHeight
   );
 }

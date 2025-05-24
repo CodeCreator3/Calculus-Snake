@@ -6,8 +6,8 @@ const btns = [];
 let moves = 0;
 let roomCode = "";
 let answered = false;
-let cameraX = 0;
-let cameraY = 0;
+let cameraX = 50;
+let cameraY = 50;
 let zoom = 1;
 const zoomMin = 0.5;
 const zoomMax = 2;
@@ -21,11 +21,11 @@ let globalTimer;
 
 function createGame() {
   socket.emit("createGame");
-  
+
   isHost = true; // set flag
   socket.on("gameCreated", (code) => {
     roomCode = code;
-    document.getElementById("roomDisplay").innerText = "Room Code: " + code;
+    document.getElementById("roomDisplay").innerText = "Site: calculus-snake.onrender.com | Room Code: " + code;
     document.getElementById("startGameButton").style.display = "block";
 
     console.log("Game created with code: " + code);
@@ -39,8 +39,9 @@ function createGame() {
 
 function startGame() {
   console.log("Starting game with room code: " + roomCode);
-  socket.emit("startGame", {roomCode});
+  socket.emit("startGame", { roomCode });
   document.getElementById("startGameButton").style.display = "none";
+  if (isHost) document.getElementById("leaderboard").style.display = "block";
 }
 
 function paintGrid() {
@@ -52,7 +53,7 @@ function paintGrid() {
   }
 }
 
-function askUsername(){
+function askUsername() {
   document.getElementById("usernameInput").style.display = "block";
   document.getElementById("lobbyUI").style.display = "none";
 }
@@ -71,7 +72,7 @@ function joinGame() {
 }
 
 socket.on("question", (q) => {
-  if(isHost) return; // Host should not receive questions
+  if (isHost) return; // Host should not receive questions
   const newQ = randomizeQuestion(q);
   console.log("Received question:", newQ);
 
@@ -137,7 +138,9 @@ function randomizeQuestion(q) {
   for (let i = 0; i < q.choices.length; i++) {
     newChoices[i] = q.choices[newIndices[i]];
   }
-  let newCorrectIndex = newIndices.findIndex((element) => element == q.correctIndex);
+  let newCorrectIndex = newIndices.findIndex(
+    (element) => element == q.correctIndex
+  );
   return {
     question: q.question,
     choices: newChoices,
@@ -147,7 +150,7 @@ function randomizeQuestion(q) {
 
 socket.on("answerResult", (correct, index, correctIndex) => {
   if (answered) return;
-  if (correct) moves+=5;
+  if (correct) moves += 5;
   if (correct) {
     btns[index].style.backgroundColor = "#648268";
   } else {
@@ -164,23 +167,10 @@ socket.on("answerResult", (correct, index, correctIndex) => {
   );
 });
 
-socket.on("startTimer", ({ duration }) => {
-  let timerDisplay = document.getElementById("timerDisplay");
+socket.on("timerUpdate", ({ time }) => {
+  const timerDisplay = document.getElementById("timerDisplay");
   timerDisplay.style.display = "block";
-  if (globalTimer) globalTimer.stop();
-
-  globalTimer = new CountdownTimer(
-    duration,
-    (time) => {
-      timerDisplay.textContent = `Time: ${time}`;
-    },
-    () => {
-      timerDisplay.textContent = "Time's up!";
-      socket.emit("endGame", roomCode);
-    }
-  );
-
-  globalTimer.start();
+  timerDisplay.textContent = `Time: ${time}`;
 });
 
 window.addEventListener("keydown", (e) => {
@@ -250,13 +240,15 @@ window.addEventListener("resize", resizeCanvas);
 socket.on("stateUpdate", (session) => {
   const player = session.players[socket.id];
   if (isHost) {
-    if(cameraVelocityX !== 0 || cameraVelocityY !== 0){
+    if (cameraVelocityX !== 0 || cameraVelocityY !== 0) {
       cameraX -= cameraVelocityX;
       cameraY -= cameraVelocityY;
-      if(cameraX < 0) cameraX = 0;
-      if(cameraY < 0) cameraY = 0;
-      if(cameraX > (gridWidth * cellSize * zoom)) cameraX = (gridWidth * cellSize * zoom);
-      if(cameraY > (gridHeight * cellSize * zoom)) cameraY = (gridHeight * cellSize * zoom);
+      if (cameraX < 0) cameraX = 0;
+      if (cameraY < 0) cameraY = 0;
+      if (cameraX > gridWidth * cellSize * zoom)
+        cameraX = gridWidth * cellSize * zoom;
+      if (cameraY > gridHeight * cellSize * zoom)
+        cameraY = gridHeight * cellSize * zoom;
 
       // Apply damping to make it smooth and stop gradually
       cameraVelocityX *= 0.85;
@@ -265,7 +257,7 @@ socket.on("stateUpdate", (session) => {
       if (Math.abs(cameraVelocityX) < 0.01) cameraVelocityX = 0;
       if (Math.abs(cameraVelocityY) < 0.01) cameraVelocityY = 0;
     }
-  } else{
+  } else {
     const targetX = player.x * cellSize + cellSize / 2;
     const targetY = player.y * cellSize + cellSize / 2;
     cameraX += (targetX - cameraX) * 0.1;
@@ -280,10 +272,16 @@ socket.on("stateUpdate", (session) => {
   ctx.translate(-cameraX, -cameraY);
 
   // Draw all food
-  for(const food of session.food) {
+  for (const food of session.food) {
     ctx.fillStyle = "#FF0000";
     ctx.beginPath();
-    ctx.arc(food.x * cellSize + cellSize*0.5, food.y * cellSize+ cellSize*0.5, cellSize * 0.5, 0, Math.PI * 2);
+    ctx.arc(
+      food.x * cellSize + cellSize * 0.5,
+      food.y * cellSize + cellSize * 0.5,
+      cellSize * 0.5,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
   }
 
@@ -292,7 +290,9 @@ socket.on("stateUpdate", (session) => {
     const p = session.players[id];
     ctx.fillStyle = p.color;
     ctx.fillRect(p.x * cellSize, p.y * cellSize, cellSize, cellSize);
-    document.getElementById("moveCounter").textContent = `Moves: ${moves} Length: ${p.length + 1}`; // add 1 to length to account for the head
+    document.getElementById(
+      "moveCounter"
+    ).textContent = `Moves: ${moves} Length: ${p.length + 1}`; // add 1 to length to account for the head
     for (const pos of p.bodyPoses) {
       ctx.fillStyle = darkenColor(p.color, 50);
       ctx.fillRect(pos.x * cellSize, pos.y * cellSize, cellSize, cellSize);
@@ -300,7 +300,11 @@ socket.on("stateUpdate", (session) => {
     ctx.fillStyle = "white";
     ctx.font = "12px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(p.username || "?", p.x * cellSize + cellSize / 2, p.y * cellSize - 5);
+    ctx.fillText(
+      p.username || "?",
+      p.x * cellSize + cellSize / 2,
+      p.y * cellSize - 5
+    );
   }
 
   paintGrid();
@@ -308,7 +312,6 @@ socket.on("stateUpdate", (session) => {
   if (isHost) {
     const leaderboard = document.getElementById("leaderboard");
     const list = document.getElementById("leaderboardList");
-    leaderboard.style.display = "block";
 
     const players = Object.values(session.players);
     players.sort((a, b) => b.length - a.length); // 🔢 Sort by length
@@ -336,16 +339,19 @@ function darkenColor(color, amount) {
 
 socket.on("addFood", (session) => {
   loc = generateRandomLocation(session);
-  session.food.push(loc)
-})
+  session.food.push(loc);
+});
 
 function generateRandomLocation(session) {
   let x;
   let y;
-  do{
-  x = Math.floor(Math.random() * gridWidth);
-  y = Math.floor(Math.random() * gridHeight);
-  } while(session.food.some((obj) => obj.x === x && obj.y === y) || Object.values(session.players).some((obj) => obj.x === x && obj.y === y));
+  do {
+    x = Math.floor(Math.random() * gridWidth);
+    y = Math.floor(Math.random() * gridHeight);
+  } while (
+    session.food.some((obj) => obj.x === x && obj.y === y) ||
+    Object.values(session.players).some((obj) => obj.x === x && obj.y === y)
+  );
   console.log("Food location: ", x, y);
   return { x, y };
 }
@@ -357,6 +363,7 @@ socket.on("endGame", ({ players }) => {
   document.getElementById("moveCounter").style.display = "none";
   document.getElementById("timerDisplay").style.display = "none";
   document.getElementById("leaderboard").style.display = "none";
+  document.getElementById("roomDisplay").style.display = "none";
 
   if (isHost) {
     // ✅ HOST: show leaderboard
@@ -368,15 +375,16 @@ socket.on("endGame", ({ players }) => {
     const sorted = Object.values(players).sort((a, b) => b.length - a.length);
     sorted.forEach((p, index) => {
       const li = document.createElement("li");
-      li.textContent = `${index + 1}. ${p.username || "??"} — Length: ${p.length + 1}`;
+      li.textContent = `${index + 1}. ${p.username || "??"} — Length: ${
+        p.length + 1
+      }`;
       finalList.appendChild(li);
     });
-
   } else {
     // ✅ PLAYER: show own rank
     const player = players[socket.id];
     const sorted = Object.values(players).sort((a, b) => b.length - a.length);
-    const rank = sorted.findIndex(p => p === player) + 1;
+    const rank = sorted.findIndex((p) => p === player) + 1;
 
     const resultScreen = document.getElementById("resultScreen");
     resultScreen.innerHTML = `
