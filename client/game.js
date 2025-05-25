@@ -28,15 +28,15 @@ function createGame() {
 
   // Explicitly show the elements for the game creation/lobby screen.
   // These elements were hidden by goToMainMenu().
-  document.getElementById("roomDisplay").style.display = "block"; // Or use an empty string "" to reset to CSS default
-  document.getElementById("gameCanvas").style.display = "block";  // Make the canvas for the grid visible
+  document.getElementById("roomDisplay").style.display = "block"; 
+  document.getElementById("gameCanvas").style.display = "block";  
 
   socket.on("gameCreated", (code) => {
     roomCode = code;
     document.getElementById("roomDisplay").innerText = "Site: calculus-snake.onrender.com | Room Code: " + code;
     document.getElementById("startGameButton").style.display = "block";
 
-    // Ensure questionPanel is hidden at this stage
+
     document.getElementById("questionPanel").style.display = "none";
     console.log("Game created with code: " + code);
   });
