@@ -21,20 +21,108 @@ let globalTimer;
 
 function createGame() {
   socket.emit("createGame");
-
   isHost = true; // set flag
+
+  // Hide the main menu lobby UI
+  document.getElementById("lobbyUI").style.display = "none";
+
+  // Explicitly show the elements for the game creation/lobby screen.
+  // These elements were hidden by goToMainMenu().
+  document.getElementById("roomDisplay").style.display = "block"; // Or use an empty string "" to reset to CSS default
+  document.getElementById("gameCanvas").style.display = "block";  // Make the canvas for the grid visible
+
   socket.on("gameCreated", (code) => {
     roomCode = code;
     document.getElementById("roomDisplay").innerText = "Site: calculus-snake.onrender.com | Room Code: " + code;
     document.getElementById("startGameButton").style.display = "block";
 
-    console.log("Game created with code: " + code);
-
-    // Hide the lobby UI
-    document.getElementById("lobbyUI").style.display = "none";
-
+    // Ensure questionPanel is hidden at this stage
     document.getElementById("questionPanel").style.display = "none";
+    console.log("Game created with code: " + code);
   });
+}
+
+function goToMainMenu() {
+  // 1. Stop the question timer from the client side
+  if (typeof questionTimer !== 'undefined' && questionTimer && typeof questionTimer.stop === 'function') {
+    questionTimer.stop();
+  }
+
+  // 2. Clear any global timers that might be running
+  if (globalTimer) {
+    clearInterval(globalTimer);
+    globalTimer = null;
+  }
+
+  // 3. Reset timer display
+  const timerDisplay = document.getElementById("timerDisplay");
+  if (timerDisplay) {
+    timerDisplay.textContent = "Time: -1";
+    timerDisplay.style.display = "none";
+  }
+
+  // 4. Hide all active game sections
+  const sectionsToHide = [
+    "questionPanel",
+    "awaitingText",
+    "usernameInput",
+    "startGameButton",
+    "resultScreen",
+    "finalLeaderboard",
+    "timerDisplay",
+    "moveCounter",
+    "roomDisplay",
+    "gameCanvas",
+    "leaderboard"
+  ];
+
+  sectionsToHide.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = "none";
+    }
+  });
+
+  // 5. Show only the main menu
+  const lobbyUI = document.getElementById("lobbyUI");
+  if (lobbyUI) {
+    lobbyUI.style.display = "block";
+  }
+
+  // 6. Clear input fields to reset state
+  const roomCodeInput = document.getElementById("roomCode");
+  if (roomCodeInput) {
+    roomCodeInput.value = "";
+  }
+  const usernameInput = document.getElementById("username");
+  if (usernameInput) {
+    usernameInput.value = "";
+  }
+
+  // 7. Reset game state variables
+  moves = 0;
+  answered = false;
+  isHost = false;
+  roomCode = "";
+  
+  // 8. Reset camera position
+  cameraX = 50;
+  cameraY = 50;
+  zoom = 1;
+  cameraVelocityX = 0;
+  cameraVelocityY = 0;
+
+  // 9. Clear the canvas
+  if (ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // 10. Disconnect from current room if connected
+  if (socket && socket.connected) {
+    socket.disconnect();
+    socket.connect(); // Reconnect fresh
+  }
 }
 
 function startGame() {
@@ -69,6 +157,7 @@ function joinGame() {
   document.getElementById("moveCounter").style.display = "block";
   socket.emit("setGridSize", { roomCode, gridWidth, gridHeight });
   socket.emit("joinGame", { roomCode: code, username: username });
+  document.getElementById("mainMenuButton").style.display = "block";
 }
 
 socket.on("question", (q) => {
@@ -110,8 +199,13 @@ socket.on("question", (q) => {
   // Re-render math
   MathJax.typesetPromise([questionText]);
 
-  // Show panel
+  // Show panel and start question timer
   panel.style.display = "block";
+  
+  // Start the question timer if it exists
+  if (typeof questionTimer !== 'undefined' && questionTimer && typeof questionTimer.start === 'function') {
+    questionTimer.start();
+  }
 });
 
 socket.on("gameStatus", ({ gameStarted }) => {
@@ -150,6 +244,12 @@ function randomizeQuestion(q) {
 
 socket.on("answerResult", (correct, index, correctIndex) => {
   if (answered) return;
+  
+  // Stop question timer when answer is received
+  if (typeof questionTimer !== 'undefined' && questionTimer && typeof questionTimer.stop === 'function') {
+    questionTimer.stop();
+  }
+  
   if (correct) moves += 5;
   if (correct) {
     btns[index].style.backgroundColor = "#648268";
@@ -357,6 +457,15 @@ function generateRandomLocation(session) {
 }
 
 socket.on("endGame", ({ players }) => {
+  // Stop all timers when game ends
+  if (typeof questionTimer !== 'undefined' && questionTimer && typeof questionTimer.stop === 'function') {
+    questionTimer.stop();
+  }
+  if (globalTimer) {
+    clearInterval(globalTimer);
+    globalTimer = null;
+  }
+
   // Hide everything else
   document.getElementById("gameCanvas").style.display = "none";
   document.getElementById("questionPanel").style.display = "none";

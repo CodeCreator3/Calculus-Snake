@@ -25,6 +25,27 @@
       async
       src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
     ></script>
+
+<button id="mainMenuButton" onclick="goToMainMenu()">Back to menu</button>
+    <style>
+      #mainMenuButton {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #333;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        font-family: sans-serif;
+        border-radius: 8px;
+        z-index: 999;
+        cursor: pointer;
+      }
+      #mainMenuButton:hover {
+        background-color: #555;
+      }
+    </style>
+
     <div id="lobbyUI" align="center">
       <h1 id="gameTitle">Snake Calculus Game</h1>
       <button onclick="createGame()">Create Game</button>
